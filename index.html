@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Recovery Navigator App — Video Flow</title>
+<style>
+  :root{--blue:#2563eb;--green:#059669;--red:#dc2626;--card:#f9fafb;--muted:#6b7280}
+  body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;background:#f4f6f8;margin:0;padding:0;color:#0f172a}
+  .page{display:none;min-height:100vh;padding:28px;box-sizing:border-box}
+  .page.active{display:block}
+  .card{max-width:560px;margin:20px auto;background:#fff;border-radius:12px;padding:20px;box-shadow:0 6px 18px rgba(2,6,23,0.06)}
+  h1{font-size:20px;margin:0 0 12px;color:var(--blue);text-align:center}
+  p{margin:0 0 12px;color:#111827}
+  .btn{display:inline-block;width:100%;padding:12px;border:0;border-radius:10px;font-weight:600;cursor:pointer}
+  .btn.blue{background:var(--blue);color:#fff}
+  .btn.green{background:var(--green);color:#fff}
+  .btn.red{background:var(--red);color:#fff}
+  .small{font-size:13px;color:var(--muted);text-align:center;margin-top:8px}
+  .actions{display:flex;gap:10px;margin-top:12px}
+  .half{flex:1}
+  input,textarea{width:100%;padding:10px;border-radius:8px;border:1px solid #e5e7eb;box-sizing:border-box}
+  .list-card{background:var(--card);padding:12px;border-radius:10px;margin:10px 0;display:flex;flex-direction:column;gap:8px}
+  .patient-row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+  .patient-info{font-weight:600}
+  .btn-ghost{background:transparent;border:1px solid #e5e7eb;padding:10px;border-radius:8px;cursor:pointer}
+  /* Connecting & Video screens */
+  .center{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:60vh}
+  .status{font-size:18px;margin-bottom:14px}
+  .video-stage{max-width:900px;margin:18px auto 8px;display:flex;gap:12px}
+  .video-panel{flex:1;border-radius:12px;background:#111827;color:#fff;height:320px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;overflow:hidden}
+  .label{position:absolute;left:12px;bottom:12px;background:rgba(0,0,0,0.4);padding:6px 10px;border-radius:8px;font-weight:600}
+  .avatar{width:120px;height:120px;background:rgba(255,255,255,0.08);border-radius:999px;display:flex;align-items:center;justify-content:center}
+  .avatar svg{width:72px;height:72px;opacity:0.95}
+  .meta{font-size:14px;margin-top:8px;opacity:0.95}
+  .controls{display:flex;gap:12px;justify-content:center;margin-top:14px}
+  .back-link{display:inline-block;margin-top:10px;color:var(--muted);cursor:pointer;text-decoration:underline;background:none;border:none;padding:0}
+  footer{max-width:560px;margin:20px auto;text-align:center;color:var(--muted);font-size:13px}
+  @media(max-width:720px){.video-stage{flex-direction:column}.video-panel{height:220px}}
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 18px;
+}
+.logo svg {
+  width: 40px;
+  height: 40px;
+}
+.logo span {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--blue);
+  letter-spacing: 0.5px;
+}
+
+</style>
+</head>
+<body>
+
+<!-- Pages -->
+<!-- Role Selection Page -->
+<div id="rolePage" class="page active">
+
+  <div class="logo">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+      <path fill="#2563eb" d="M17 10.5V7a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-3.5l4 4v-11l-4 4z"/>
+    </svg>
+    <span>Handoff Video Call App</span>
+  </div>
+
+  <div class="card">
+    <h1>Select Your Role</h1>
+    <button class="btn blue" onclick="goTo('loginPage','patient')">👤 Patient Login</button>
+    <button class="btn green" style="margin-top:8px" onclick="goTo('loginPage','navigator')">🧭 Navigator Login</button>
+    <p class="small">Single-file demo — no real authentication. Enter any email/password to continue.</p>
+  </div>
+</div>
+
+
+<!-- Register Page -->
+<div id="registerPage" class="page">
+  <div class="card">
+    <h1 id="registerHeading">Register</h1>
+    <input id="regName" type="text" placeholder="Full Name" style="margin-bottom:8px">
+    <input id="regEmail" type="email" placeholder="Email" style="margin-bottom:8px">
+    <input id="regAge" type="number" placeholder="Age" style="margin-bottom:8px">
+    <input id="regPassword" type="password" placeholder="Password" style="margin-bottom:12px">
+    <div class="actions">
+      
+      <button class="btn green half" onclick="register()">Register</button>
+      <button class="btn-ghost half" onclick="back()">Back</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Login Page -->
+<div id="loginPage" class="page">
+  <div class="card">
+    <h1 id="loginHeading">Login</h1>
+    <input id="email" type="email" placeholder="Email" style="margin-bottom:8px">
+    <input id="password" type="password" placeholder="Password">
+    <div class="actions">
+      
+      <button class="btn blue half" onclick="login()">Log In</button>
+      <button class="btn-ghost half" onclick="back()">Back</button>
+    </div>
+    <p class="small" style="margin-top:10px;text-align:center">Don’t have an account? <a href="#" onclick="goToRegister()" style="color:#2563eb;text-decoration:underline">Create one</a></p>
+  </div>
+</div>
+
+<!-- Patient Dashboard Page -->
+<div id="patientPage" class="page">
+  <div class="card">
+    <h1>👋 Welcome, Patient</h1>
+    <p>Access emergency help, appointments, and your recovery plan.</p>
+
+    <div class="list-card">
+      <div style="font-weight:700;color:#dc2626">📞 Emergency Help</div>
+      <a href="tel:911" class="patient-row"><span>🚑 Call Emergency (911)</span></a>
+      <a href="tel:988" class="patient-row"><span>💬 Suicide & Crisis Lifeline (988)</span></a>
+      <a href="tel:+18001234567" class="patient-row"><span>🏥 Local Recovery Center</span></a>
+      <a href="tel:+18007654321" class="patient-row"><span>☎️ 24/7 Helpline</span></a>
+    </div>
+
+    <div class="list-card">
+      <div style="font-weight:700;color:var(--blue)">📅 Follow-Up Dashboard</div>
+      <div class="patient-row"><div>📔 Appointments</div><button class="btn-ghost" onclick="pageStack.push('patientPage'); loadAppointments(); showPage('appointmentsPage')">Open</button></div>
+      <div class="patient-row"><div>🧭 Recovery Plan</div><button class="btn-ghost" onclick="pageStack.push('patientPage'); loadRecovery(); showPage('recoveryPage')">Open</button></div>
+      <div>
+        <div style="font-weight:700;margin-bottom:6px">💬 Symptoms & Comments</div>
+        <textarea id="symptomText" rows="3" placeholder="Describe symptoms or post a comment..."></textarea>
+        <div class="actions" style="margin-top:8px">
+          <button class="btn blue" onclick="postSymptom()">Post Entry</button>
+          <button class="btn-ghost" onclick="back()">Back</button>
+        </div>
+        <div id="symptomLog" style="margin-top:12px;font-size:14px"></div>
+      </div>
+    </div>
+
+    <div class="actions">
+      
+      <button class="btn red" onclick="logout()">Log Out</button>
+    </div>
+  </div>
+</div>
+
+<!-- Navigator Dashboard Page -->
+<div id="navigatorPage" class="page">
+  <div class="card">
+    <h1>🧭 Navigator Dashboard</h1>
+    <p>Click a patient to open their follow-up record or perform a warm handoff call.</p>
+
+    <div class="list-card">
+      <div class="patient-row">
+        <div>
+          <div class="patient-info">John Doe</div>
+          <div style="font-size:13px;color:var(--muted)">In Recovery</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;width:48%">
+          <button class="btn blue" onclick="openPatient('John Doe')">Open Record</button>
+          <button class="btn green" onclick="startConnecting('John Doe')">📞 Make Warm Handoff Video Call</button>
+        </div>
+      </div>
+      <div class="patient-row" style="margin-top:12px">
+        <div>
+          <div class="patient-info">Sarah Lee</div>
+          <div style="font-size:13px;color:var(--muted)">Needs Follow-Up</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;width:48%">
+          <button class="btn blue" onclick="openPatient('Sarah Lee')">Open Record</button>
+          <button class="btn green" onclick="startConnecting('Sarah Lee')">📞 Make Warm Handoff Video Call</button>
+        </div>
+      </div>
+      <div class="patient-row" style="margin-top:12px">
+        <div>
+          <div class="patient-info">Mark Johnson</div>
+          <div style="font-size:13px;color:var(--muted)">Completed Program</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px;width:48%">
+          <button class="btn blue" onclick="openPatient('Mark Johnson')">Open Record</button>
+          <button class="btn green" onclick="startConnecting('Mark Johnson')">📞 Make Warm Handoff Video Call</button>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:12px" class="actions">
+      <button class="btn red" onclick="logout()">Log Out</button>
+      <button class="btn-ghost" onclick="back()">Back</button>
+    </div>
+  </div>
+</div>
+
+<!-- Connecting Page (acts like a separate page) -->
+
+<!-- Patient Record Page -->
+<div id="recordPage" class="page">
+  <div class="card">
+    <h1 id="recordHeading">Patient Record</h1>
+    <div id="recordDetails" style="margin-bottom:14px;font-size:14px;color:#374151"></div>
+
+    <h3>🩺 Symptom Log</h3>
+    <div id="recordSymptoms" style="background:#f9fafb;border-radius:8px;padding:10px;margin-bottom:12px;font-size:14px"></div>
+
+    <h3>🧭 Navigator Comments</h3>
+    <textarea id="navComment" rows="3" placeholder="Add your comment..."></textarea>
+    <div class="actions" style="margin-top:10px">
+      <button class="btn blue" onclick="addNavComment()">Post Comment</button>
+      <button class="btn-ghost" onclick="back()">Back</button>
+    </div>
+    <div id="navCommentsLog" style="margin-top:14px;font-size:14px"></div>
+  </div>
+</div>
+
+
+<div id="connectingPage" class="page">
+  <div class="card center">
+    <h1>🔗 Warm Handoff — Connecting</h1>
+    <div class="status" id="connectingStatus">Calling…</div>
+    <div class="small">Preparing secure connection to the patient.</div>
+    <div class="actions" style="margin-top:18px; width:100%">
+      <button class="btn red" onclick="cancelConnecting()">Cancel</button>
+      <button class="btn-ghost" onclick="back()">Back</button>
+    </div>
+  </div>
+</div>
+
+<!-- Split Video Page (with image placeholders) -->
+<div id="videoPage" class="page">
+  <div class="card">
+    <h1>Warm Handoff — Live Call</h1>
+    <p style="margin-bottom:8px">Connected with <span id="livePatientName" style="font-weight:700"></span></p>
+
+    <div class="video-stage">
+      <div class="video-panel" style="background:linear-gradient(180deg,#0f172a,#111827)">
+        <div class="avatar" aria-hidden="true">
+          <!-- Navigator silhouette SVG -->
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5z" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M3 20c0-3.866 3.134-7 7-7h4c3.866 0 7 3.134 7 7" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="meta">Navigator</div>
+        <div class="label">You</div>
+      </div>
+
+      <div class="video-panel" style="background:linear-gradient(180deg,#064e3b,#0f5132)">
+        <div class="avatar" aria-hidden="true">
+          <!-- Patient silhouette SVG -->
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 12c2.761 0 5-2.239 5-5s-2.239-5-5-5-5 2.239-5 5 2.239 5 5 5z" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M4 21c0-3 2.5-5 6-5h4c3.5 0 6 2 6 5" stroke="#fff" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <div class="meta" id="patientLabel">Patient</div>
+        <div class="label">Participant</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <button class="btn red" style="width:160px" onclick="endCall()">End Call</button>
+      <button class="btn-ghost" style="width:160px" onclick="back()">Back</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- Appointments Page -->
+<div id="appointmentsPage" class="page">
+  <div class="card">
+    <h1>📅 Appointments</h1>
+    <p>View or add your upcoming appointments.</p>
+    <div id="appointmentsList" style="background:#f9fafb;border-radius:8px;padding:10px;margin-bottom:12px;font-size:14px">
+      <i>No appointments yet.</i>
+    </div>
+    <input id="newAppointment" type="text" placeholder="Add new appointment..." style="margin-bottom:8px">
+    <div class="actions">
+      <button class="btn blue half" onclick="addAppointment()">Add</button>
+      <button class="btn-ghost half" onclick="back()">Back</button>
+    </div>
+  </div>
+</div>
+
+<!-- Recovery Plan Page -->
+<div id="recoveryPage" class="page">
+  <div class="card">
+    <h1>🧭 Recovery Plan</h1>
+    <p>Track your recovery steps and progress.</p>
+    <div id="recoveryList" style="background:#f9fafb;border-radius:8px;padding:10px;margin-bottom:12px;font-size:14px">
+      <i>No recovery steps yet.</i>
+    </div>
+    <input id="newStep" type="text" placeholder="Add new recovery step..." style="margin-bottom:8px">
+    <div class="actions">
+      <button class="btn blue half" onclick="addRecoveryStep()">Add</button>
+      <button class="btn-ghost half" onclick="back()">Back</button>
+    </div>
+  </div>
+</div>
+
+<footer>Demo — single HTML file. Use Back to navigate between pages.</footer>
+
+<script>
+  
+  function goToRegister(){
+    const current = document.querySelector('.page.active').id;
+    pageStack.push(current);
+    const heading = window.chosenRole === 'patient' ? 'Patient Registration' : 'Navigator Registration';
+    document.getElementById('registerHeading').innerText = heading;
+    showPage('registerPage');
+  }
+
+  function register(){
+    const name = document.getElementById('regName').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const age = document.getElementById('regAge').value.trim();
+    const pass = document.getElementById('regPassword').value.trim();
+    // Removed validation: allow register even if empty
+    const user = { role: window.chosenRole, name, email, age, password: pass };
+    localStorage.setItem('user_'+window.chosenRole, JSON.stringify(user));
+    alert('Registration successful!');
+    if(window.chosenRole === 'patient'){
+      pageStack.length = 0;
+      showPage('patientPage');
+    } else {
+      pageStack.length = 0;
+      showPage('navigatorPage');
+    }
+  }
+
+
+  // Simple page stack for Back button behavior
+  const pageStack = [];
+  function showPage(id) {
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  }
+  function goTo(pageId, roleChoice) {
+    // push current page to stack
+    const current = document.querySelector('.page.active').id;
+    pageStack.push(current);
+    // if navigating to login, store role
+    if (pageId === 'loginPage' && roleChoice) {
+      window.chosenRole = roleChoice;
+      document.getElementById('loginHeading').innerText = roleChoice === 'patient' ? 'Patient Login' : 'Navigator Login';
+    }
+    showPage(pageId);
+  }
+  function back() {
+    const prev = pageStack.pop() || 'rolePage';
+    showPage(prev);
+  }
+
+  function login() {
+    const email = document.getElementById('email').value.trim();
+    const pass = document.getElementById('password').value.trim();
+    // Removed validation: allow login even if empty
+    if (window.chosenRole === 'patient') {
+      pageStack.length = 0;
+      showPage('patientPage');
+    } else {
+      pageStack.length = 0;
+      showPage('navigatorPage');
+    }
+  }
+
+  function logout() {
+    pageStack.length = 0;
+    document.getElementById('email').value = '';
+    document.getElementById('password').value = '';
+    showPage('rolePage');
+  }
+
+  
+function openPatient(name){
+  const current = document.querySelector('.page.active').id;
+  pageStack.push(current);
+  showPage('recordPage');
+  document.getElementById('recordHeading').innerText = name + ' — Record';
+  document.getElementById('recordDetails').innerText = 'Status: Active in recovery | Last update: ' + new Date().toLocaleDateString();
+
+  // Load symptom entries saved by patient
+  const log = JSON.parse(localStorage.getItem('symptomLog') || '[]');
+  const symptomContainer = document.getElementById('recordSymptoms');
+  symptomContainer.innerHTML = log.length ? log.map(e => `<div>🕓 ${e}</div>`).join('') : '<i>No symptoms logged yet.</i>';
+
+  // Load navigator comments
+  const comments = JSON.parse(localStorage.getItem('navComments_'+name) || '[]');
+  const commentContainer = document.getElementById('navCommentsLog');
+  commentContainer.innerHTML = comments.length ? comments.map(c => `<div>💬 ${c}</div>`).join('') : '<i>No navigator comments yet.</i>';
+
+  window.currentPatient = name;
+}
+
+
+  
+function addNavComment(){
+  const txt = document.getElementById('navComment').value.trim();
+  // Removed validation: allow comment even if empty
+  const name = window.currentPatient;
+  const key = 'navComments_'+name;
+  const comments = JSON.parse(localStorage.getItem(key) || '[]');
+  const entry = new Date().toLocaleString() + ' — ' + txt;
+  comments.unshift(entry);
+  localStorage.setItem(key, JSON.stringify(comments));
+  document.getElementById('navComment').value = '';
+  openPatient(name); // reload view
+}
+
+function postSymptom(){
+  const txt = document.getElementById('symptomText').value.trim();
+  // Removed validation: allow post even if empty
+  const entry = new Date().toLocaleString() + ' — ' + txt;
+  const log = JSON.parse(localStorage.getItem('symptomLog') || '[]');
+  log.unshift(entry);
+  localStorage.setItem('symptomLog', JSON.stringify(log));
+
+  const logDiv = document.getElementById('symptomLog');
+  const div = document.createElement('div');
+  div.textContent = entry;
+  div.style.padding = '6px 0';
+  logDiv.prepend(div);
+  document.getElementById('symptomText').value = '';
+}
+
+// Symptoms
+  function postSymptom(){
+    const txt = document.getElementById('symptomText').value.trim();
+    // Removed validation: allow post even if empty
+    const log = document.getElementById('symptomLog');
+    const entry = document.createElement('div');
+    entry.textContent = new Date().toLocaleString() + ' — ' + txt;
+    entry.style.padding = '6px 0';
+    log.prepend(entry);
+    document.getElementById('symptomText').value = '';
+  }
+
+  // Video call flow
+  let pendingPatientName = '';
+  function startConnecting(patientName){
+    pendingPatientName = patientName;
+    // push current and go to connecting screen
+    const current = document.querySelector('.page.active').id;
+    pageStack.push(current);
+    showPage('connectingPage');
+    document.getElementById('connectingStatus').innerText = 'Calling ' + patientName + '...';
+    // simulate connecting then show video page
+    window._connectTimer = setTimeout(()=>{
+      // push connecting to stack so Back from video goes to connecting
+      pageStack.push('connectingPage');
+      document.getElementById('livePatientName').innerText = patientName;
+      document.getElementById('patientLabel').innerText = patientName;
+      showPage('videoPage');
+    }, 2000);
+  }
+
+  function cancelConnecting(){
+    clearTimeout(window._connectTimer);
+    // go back to previous page (navigator)
+    const prev = pageStack.pop() || 'navigatorPage';
+    showPage(prev);
+  }
+
+  function endCall(){
+    // clear any timers and reset pending patient
+    pendingPatientName = '';
+    clearTimeout(window._connectTimer);
+    // return to navigator dashboard and clear stack
+    pageStack.length = 0;
+    showPage('navigatorPage');
+  }
+
+  
+// --- Appointments ---
+function loadAppointments(){
+  const list = JSON.parse(localStorage.getItem('appointments') || '[]');
+  const container = document.getElementById('appointmentsList');
+  container.innerHTML = list.length ? list.map(a => `<div>📌 ${a}</div>`).join('') : '<i>No appointments yet.</i>';
+}
+function addAppointment(){
+  const txt = document.getElementById('newAppointment').value.trim();
+  const list = JSON.parse(localStorage.getItem('appointments') || '[]');
+  if(txt){ list.unshift(new Date().toLocaleString() + ' — ' + txt); }
+  localStorage.setItem('appointments', JSON.stringify(list));
+  document.getElementById('newAppointment').value = '';
+  loadAppointments();
+}
+
+// --- Recovery Plan ---
+function loadRecovery(){
+  const list = JSON.parse(localStorage.getItem('recoverySteps') || '[]');
+  const container = document.getElementById('recoveryList');
+  container.innerHTML = list.length ? list.map(s => `<div>✅ ${s}</div>`).join('') : '<i>No recovery steps yet.</i>';
+}
+function addRecoveryStep(){
+  const txt = document.getElementById('newStep').value.trim();
+  const list = JSON.parse(localStorage.getItem('recoverySteps') || '[]');
+  if(txt){ list.unshift(new Date().toLocaleString() + ' — ' + txt); }
+  localStorage.setItem('recoverySteps', JSON.stringify(list));
+  document.getElementById('newStep').value = '';
+  loadRecovery();
+}
+
+// Initialize: ensure rolePage active
+  showPage('rolePage');
+</script>
+</body>
+</html>
